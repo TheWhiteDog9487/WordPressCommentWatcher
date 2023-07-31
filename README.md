@@ -1,5 +1,5 @@
 # 介绍
-关于这个东西可以看[这篇文章](https://www.thewhitedog9487.xyz/wp-admin/post.php?post=1197&action=edit)
+关于这个东西可以看[这篇文章](https://www.thewhitedog9487.xyz/2023/07/31/%e8%bf%91%e4%ba%8b%e5%b0%8f%e8%ae%b0-%e5%8d%9a%e5%ae%a2%e5%8f%91%e7%9a%84%e8%af%84%e8%ae%ba%e5%8f%af%e4%bb%a5%e5%8f%8a%e6%97%b6%e9%80%9a%e7%9f%a5%e5%88%b0%e6%88%91%e4%ba%86)
 
 # 部署
 注意，这个程序是对Linux定制的（主要是文件路径那边的问题）  
