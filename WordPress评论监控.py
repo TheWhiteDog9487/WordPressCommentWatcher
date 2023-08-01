@@ -17,7 +17,10 @@ NewComment = ""
 @BotClient.event
 async def on_ready():
     print(f'以{BotClient.user}登录')
-    user = await BotClient.fetch_user(531317938863603722)
+    user = await BotClient.fetch_user(你的用户ID)
+    # 记得把你的ID换上去
+    # 开启Discord的开发者模式，返回主界面，单击左下角你的头像，点击复制用户ID
+    # 直接粘贴到上面，不用加引号，直接传数字就可以
     await user.send(NewComment)
     await BotClient.close()
 
@@ -64,7 +67,9 @@ def TimerTrigger() -> None:
                     w.write(str(RemoteCommentDate))
                 if FileCommentDate != "":
                     NewComment = f'评论者：{comment["author_name"]}\n评论内容：{comment["content"]["rendered"]}评论链接：{comment["link"]}\n评论时间：{comment["date"]}'
-                    BotClient.run('MTA4ODA2OTI5Nzg2MTA1MDQ0OA.GZkIBA.-11qdvzOz5o3zFiC-pW1YjbpFOaa93Q1vycOYg')
+                    BotClient.run('你的机器人令牌')
+                    # 记得填！
+                    # 你自己的令牌！
                     logging.info('已发送新通知\n')
             elif int(FileCommentDate) > RemoteCommentDate:
                 logging.info('有评论被删除\n')
