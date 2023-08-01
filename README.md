@@ -3,7 +3,23 @@
 
 # 部署
 从仓库下载"WordPress评论监控.py"，打开。  
-看一下里边的注释，有两个地方需要换成你自己的信息。  
+首次运行会直接退出，目录下多出来一个json配置文件，打开。  
+Bot_Token：机器人的令牌  
+Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。  
+Admin_User_ID：选择私信提醒的朋友，这里填上你的Discord用户ID，选择频道提醒的不用理会。  
+Channel_ID：选择频道提醒的朋友，这里填上你想让机器人发送消息的频道ID，选择私信提醒的不用理会。  
+注意：Admin_User_ID和Channel_ID直接写数字就行，不用像上面的Token那样加引号。Channel_Message直接填true或false，也不要加引号。  
+    
+填写完成之后应该大致长这样：
+```json
+{
+	"Bot_Token":"MTA4ODA2OTI5Nzg2MTA1MDQ0OA.GZkIBA.-11qdvzOz5o3zFiC-pW1YjbpFOaa93Q1vycOYg",
+	"Admin_User_ID":785275297272909078,
+	"Channel_ID":4987138441723578956,
+	"Channel_Message":true
+}
+```
+( 献祭一下以前的令牌，来这当下例子
 
 # 依赖项
 需要pip里的discord.py包。
