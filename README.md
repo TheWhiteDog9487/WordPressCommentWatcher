@@ -1,6 +1,16 @@
 # 介绍
 关于这个东西可以看[这篇文章](https://www.thewhitedog9487.xyz/2023/07/31/%e8%bf%91%e4%ba%8b%e5%b0%8f%e8%ae%b0-%e5%8d%9a%e5%ae%a2%e5%8f%91%e7%9a%84%e8%af%84%e8%ae%ba%e5%8f%af%e4%bb%a5%e5%8f%8a%e6%97%b6%e9%80%9a%e7%9f%a5%e5%88%b0%e6%88%91%e4%ba%86)
 
+# 依赖项
+需要pip里的discord.py包。
+```shell
+# Windows用户看这边~
+pip install discord.py
+# Linux用户看这边~
+# 我自己用的是Ubuntu，所以是apt
+apt install python3-discord
+```
+
 # 部署
 从仓库下载"WordPress评论监控.py"，打开。  
 首次运行会直接退出，目录下多出来一个json配置文件，打开。  
@@ -19,36 +29,35 @@ Channel_ID：选择频道提醒的朋友，这里填上你想让机器人发送�
 	"Channel_Message":true
 }
 ```
-( 献祭一下以前的令牌，来这当下例子
+( 献祭一下以前的令牌，来这当下例子  
 
-# 依赖项
-需要pip里的discord.py包。
+这个时候就已经可以跑起来了。  
+但是，如果每次重启设备后都是人工去开启程序，非常麻烦且不必要，非常的不人性化。  
+所以，我的建议是，把这个东西注册成一个服务。  
+Windows用户考虑下计划任务（我没实际用过，仅提供可能的建议）  
+Linux用户可以考虑用service文件，格式参考[这个](https://github.com/TheWhiteDog9487/WordPressCommentWatcher/blob/main/WordPressCommentWatcher.service)  
+```ini
+[Unit]
+Description=WordPress评论监控
+After=multi-user.target
+[Service]
+WorkingDirectory=/home/App
+User=root
+Type=idle
+ExecStart=python3 /home/App/WordPress评论监控.py
+Restart=always
+[Install]
+WantedBy=multi-user.target
+```
+注意一下里面的WorkingDirectory=和ExecStart=，后面的路径换成你自己程序的位置。  
+把这个文件保存下来，假设你的文件路径在/home/App/WordPressCommentWatcher.service  
+打开你的终端。  
 ```shell
-# Windows用户看这边~
-pip install discord.py
-# Linux用户看这边~
-# 我自己用的是Ubuntu，所以是apt
-apt install python3-discord
+ln -s /home/App/WordPressCommentWatcher.service /usr/lib/systemd/system/
+# 链接还是复制，随意。
+systemctl daemon-reload
+systemctl enable WordPressCommentWatcher
+systemctl start WordPressCommentWatcher 
+# 然后你就可以用 systemctl status WordPressCommentWatcher 来查看服务状态。
 ```
-
-# 定时器
-本程序不负责定时调用，所以需要你来处理。  
-Linux用户可以用cron，Windows我没具体试过所以自己查一下咋整。  
-## 注意事项
-如果你要用cron做定时器，注意会有一些问题。  
-如果你直接在cron里写  
-```cron
-* * * * * python3 WordPress评论监控.py
-```
-你会发现日志里有点奇怪，而且完全没有实际功能。  
-解决方案是，建一个Shell脚本，比如叫做WordPress评论监控.sh，里面的内容可以这么写：
-```bash
-#！/usr/bin/bash
-cd /home/App/
-/usr/bin/python3 WordPress评论监控.py
-```
-crontab里换成这样：  
-```cron
-* * * * * python3 WordPress评论监控.sh
-```
-小提示：5个\*表示每分钟调用一次。  
+不出意外的话，应该是没问题了。

@@ -1,0 +1,11 @@
+[Unit]
+Description=WordPress评论监控
+After=multi-user.target
+[Service]
+WorkingDirectory=/home/App
+User=root
+Type=idle
+ExecStart=python3 /home/App/WordPress评论监控.py
+Restart=always
+[Install]
+WantedBy=multi-user.target
