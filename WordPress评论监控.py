@@ -27,11 +27,6 @@ class DiscordClient(discord.Client):
         LogFileName = LogPath + "WordPress评论监控.log"
         if not os.path.exists(LogPath):
             os.makedirs(LogPath)
-        if not os.path.exists('最新评论发布时间.txt'):
-            with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
-                w.write(datetime.strptime(
-                    requests.get('https://www.thewhitedog9487.xyz/wp-json/wp/v2/comments').json()[0]["date"],
-                    '%Y-%m-%dT%H:%M:%S').strftime('%Y年%m月%d日 %H时%M分%S秒'))
         if os.path.exists(LogFileName):
             if os.path.getsize(LogFileName) > 1024 * 1024 * 10:
                 with zipfile.ZipFile(LogFileName, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -42,7 +37,7 @@ class DiscordClient(discord.Client):
         if not os.path.exists("配置文件.json"):
             with open("配置文件.json", "w", encoding="utf-8") as w:
                 w.write(
-                    "{\n\t\"Bot_Token\":\"\",\n\t\"Admin_User_ID\":1234,\n\t\"Channel_ID\":5678,\n\t\"Channel_Message\":true\n}")
+                    "{\n\t\"URL\":\"\",\n\t\"Bot_Token\":\"\",\n\t\"Admin_User_ID\":1234,\n\t\"Channel_ID\":5678,\n\t\"Channel_Message\":true\n}")
                 logging.info('首次运行')
                 logging.error('配置文件模板已生成，请填写配置文件')
             exit()
@@ -50,6 +45,10 @@ class DiscordClient(discord.Client):
             self.Config = json.load(r)
         if self.Config["Bot_Token"] == "":
             logging.error('请填写机器人令牌')
+            logging.error('这是必填项，如果为空程序将不能运行')
+            exit()
+        if self.Config["URL"] == "":
+            logging.error('请填写要监测博客的地址')
             logging.error('这是必填项，如果为空程序将不能运行')
             exit()
         if self.Config["Channel_Message"]:
@@ -64,6 +63,14 @@ class DiscordClient(discord.Client):
                 logging.error('请填写Discord管理员用户ID')
                 logging.error('这是必填项，如果为空程序将不能运行')
                 exit()
+        if not os.path.exists('最新评论发布时间.txt') or os.path.getsize('最新评论发布时间.txt') == 0:
+            if not str(self.Config["URL"]).startswith(("http://","https://")):
+                logging.error("监测链接必须以http://或者https://打头！")
+                exit()
+            with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
+                w.write(datetime.strptime(
+                    requests.get(self.Config["URL"]+'/wp-json/wp/v2/comments').json()[0]["date"],
+                    '%Y-%m-%dT%H:%M:%S').strftime('%Y年%m月%d日 %H时%M分%S秒'))
 
     async def on_ready(self):
         logging.info(f'以{BotClient.user}登录')

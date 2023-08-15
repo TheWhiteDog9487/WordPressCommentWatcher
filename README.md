@@ -14,6 +14,7 @@ apt install python3-discord
 # 部署
 从仓库下载"WordPress评论监控.py"，打开。  
 首次运行会直接退出，目录下多出来一个json配置文件，打开。  
+URL：要监测博客的地址，可以是IP或域名，必须加http://或者https://，末尾不要加/  
 Bot_Token：机器人的令牌  
 Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。  
 Admin_User_ID：选择私信提醒的朋友，这里填上你的Discord用户ID，选择频道提醒的不用理会。  
@@ -23,6 +24,7 @@ Channel_ID：选择频道提醒的朋友，这里填上你想让机器人发送�
 填写完成之后应该大致长这样：
 ```json
 {
+  	"URL":"https://www.thewhitedog9487.xyz",
 	"Bot_Token":"MTA4ODA2OTI5Nzg2MTA1MDQ0OA.GZkIBA.-11qdvzOz5o3zFiC-pW1YjbpFOaa93Q1vycOYg",
 	"Admin_User_ID":785275297272909078,
 	"Channel_ID":4987138441723578956,
