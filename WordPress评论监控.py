@@ -91,7 +91,7 @@ class DiscordClient(discord.Client):
                     logging.info('有新评论')
                     with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
                         w.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
-                        self.Message = f'评论者：{comment["author_name"]}\n评论内容：{comment["content"]["rendered"]}评论链接：{comment["link"]}\n评论时间：{comment["date"]}'
+                        self.Message = f'评论者：{comment["author_name"]}\n评论内容：{comment["content"]["rendered"]}评论链接：{comment["link"]}\n评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}'
                         if self.Config["Channel_Message"]:
                             channel = self.get_channel(self.Config["Channel_ID"])
                             await channel.send(f"<@{self.Config['Admin_User_ID']}>\n{self.Message}")
