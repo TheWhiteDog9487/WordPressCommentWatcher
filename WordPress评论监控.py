@@ -85,7 +85,7 @@ class DiscordClient(discord.Client):
         for comment in response:
             RemoteCommentDate = int(time.mktime(time.strptime(comment["date"], '%Y-%m-%dT%H:%M:%S')))
             with open('最新评论发布时间.txt', 'r', encoding="utf-8") as r:
-                FileCommentDate = r.readline()
+                FileCommentDate = r.readline().replace('\n','')
                 FileCommentDate = int(time.mktime(time.strptime(FileCommentDate, '%Y年%m月%d日 %H时%M分%S秒')))
                 if int(FileCommentDate) < RemoteCommentDate:
                     logging.info('有新评论')
