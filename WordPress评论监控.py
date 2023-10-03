@@ -12,6 +12,11 @@ import aiohttp
 from discord.ext import tasks
 
 
+LogFileName = ""
+LogPath = ""
+WorkDirectory = ""
+
+
 class DiscordConfig(object):
     def __init__(self):
         self.__Bot_Token = ""
@@ -48,6 +53,7 @@ class DiscordClient(discord.Client):
     @tasks.loop(minutes=1)
     async def TimerTrigger(self) -> None:
         logging.info(f'现在是{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}，开始检测评论状态。')
+        Compress_LogFile()
         response = None
         async with aiohttp.ClientSession() as session:
             async with session.get('https://www.thewhitedog9487.xyz/wp-json/wp/v2/comments') as response:
@@ -83,7 +89,25 @@ class DiscordClient(discord.Client):
         await self.wait_until_ready()  # wait until the bot logs in
 
 
+def Compress_LogFile():
+    global LogFileName
+    global LogPath
+    global WorkDirectory
+    if os.path.exists(LogFileName):
+        if os.path.getsize(LogFileName) > 1024 * 1024 * 1:  # 1MB
+            os.chdir(LogPath)
+            with zipfile.ZipFile(datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S") + ".zip", 'w',
+                                 zipfile.ZIP_DEFLATED) as zf:
+                zf.write("WordPress评论监控.log")
+            os.remove(LogFileName)
+            os.chdir(WorkDirectory)
+
+
 def Initialization():
+    global LogFileName
+    global LogPath
+    global WorkDirectory
+    WorkDirectory = os.getcwd()
     if platform.system() == 'Windows':
         LogPath = os.curdir + "\\日志\\"
     elif platform.system() == 'Linux':
@@ -94,11 +118,7 @@ def Initialization():
     LogFileName = LogPath + "WordPress评论监控.log"
     if not os.path.exists(LogPath):
         os.makedirs(LogPath)
-    if os.path.exists(LogFileName):
-        if os.path.getsize(LogFileName) > 1024 * 1024 * 1:  # 1MB
-            with zipfile.ZipFile(LogFileName, 'w', zipfile.ZIP_DEFLATED) as zf:
-                zf.write(datetime.now().strftime('%Y%m%d') + '.zip')
-            os.remove(LogFileName)
+    Compress_LogFile()
     logging.basicConfig(filename=LogFileName, level=logging.INFO, encoding="utf-8")
     logging.info(f'程序从{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}开始运行')
     if not os.path.exists("配置文件.json"):
