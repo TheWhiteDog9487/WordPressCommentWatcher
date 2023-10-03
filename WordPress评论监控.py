@@ -38,6 +38,8 @@ class DiscordConfig(object):
 class DiscordClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.Message = None
+        self.Config = None
         # an attribute we can access from our task
 
     async def on_ready(self):
@@ -60,11 +62,11 @@ class DiscordClient(discord.Client):
                     with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
                         w.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
                         self.Message = f'评论者：{comment["author_name"]}\n评论内容：{comment["content"]["rendered"]}评论链接：{comment["link"]}\n评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}'
-                        if self.Config["Channel_Message"]:
-                            channel = self.get_channel(self.Config["Channel_ID"])
-                            await channel.send(f"<@{self.Config['Admin_User_ID']}>\n{self.Message}")
+                        if self.Config.Channel_Message:
+                            channel = self.get_channel(self.Config.Channel_ID)
+                            await channel.send(f"<@{self.Config.Admin_User_ID}>\n{self.Message}")
                         else:
-                            user = await self.fetch_user(self.Config["Admin_User_ID"])
+                            user = await self.fetch_user(self.Config.Admin_User_ID)
                             await user.send(self.Message)
                         logging.info('已发送新通知\n')
                 elif int(FileCommentDate) > RemoteCommentDate:
@@ -93,7 +95,7 @@ def Initialization():
     if not os.path.exists(LogPath):
         os.makedirs(LogPath)
     if os.path.exists(LogFileName):
-        if os.path.getsize(LogFileName) > 1024 * 1024 * 10:
+        if os.path.getsize(LogFileName) > 1024 * 1024 * 1:  # 1MB
             with zipfile.ZipFile(LogFileName, 'w', zipfile.ZIP_DEFLATED) as zf:
                 zf.write(datetime.now().strftime('%Y%m%d') + '.zip')
             os.remove(LogFileName)
@@ -139,8 +141,8 @@ def Initialization():
 
 
 if __name__ == '__main__':
-    Config = Initialization()
     intent = discord.Intents.default()
     intent.messages = True
     BotClient = DiscordClient(intents=intent)
-    BotClient.run(Config.Get_Token())
+    BotClient.Config = Initialization()
+    BotClient.run(BotClient.Config.Get_Token())
