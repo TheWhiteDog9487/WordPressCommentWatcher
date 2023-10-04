@@ -19,6 +19,7 @@ WorkDirectory = ""
 
 class DiscordConfig(object):
     def __init__(self):
+        self.Ignore_List = []
         self.__Bot_Token = ""
         self.URL = ""
         self.Admin_User_ID = 0
@@ -26,6 +27,7 @@ class DiscordConfig(object):
         self.Channel_Message = True
 
     def From_Dict(self, Dict: dict):
+        self.Ignore_List = Dict["Ignore_List"]
         self.__Bot_Token = Dict["_DiscordConfig__Bot_Token"]
         self.URL = Dict["URL"]
         self.Admin_User_ID = Dict["Admin_User_ID"]
@@ -68,6 +70,11 @@ class DiscordClient(discord.Client):
                     with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
                         w.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
                         self.Message = f'评论者：{comment["author_name"]}\n评论内容：{comment["content"]["rendered"]}评论链接：{comment["link"]}\n评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}'
+                        for user in self.Config.Ignore_List:
+                            if comment["author_name"] == user:
+                                logging.info("由于发送评论的用户位于忽略列表当中，因此本次新评论不会发送提醒。")
+                                logging.info(self.Message)
+                                return
                         if self.Config.Channel_Message:
                             channel = self.get_channel(self.Config.Channel_ID)
                             await channel.send(f"<@{self.Config.Admin_User_ID}>\n{self.Message}")
@@ -121,7 +128,7 @@ def Initialization():
     Compress_LogFile()
     logging.basicConfig(filename=LogFileName, level=logging.INFO, encoding="utf-8")
     logging.info(f'程序从{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}开始运行')
-    if not os.path.exists("配置文件.json"):
+    if (not os.path.exists("配置文件.json")) or (os.path.exists("配置文件.json") and (os.path.getsize("配置文件.json") == 0)):
         with open("配置文件.json", "w", encoding="utf-8") as w:
             json.dump(DiscordConfig().__dict__, w, indent=4)
             logging.info('首次运行')
