@@ -24,8 +24,6 @@ _DiscordConfig__Bot_Token：机器人的令牌
 Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。  
 Admin_User_ID：选择私信提醒的朋友，这里填上你的Discord用户ID，选择频道提醒的不用理会。  
 Channel_ID：选择频道提醒的朋友，这里填上你想让机器人发送消息的频道ID，选择私信提醒的不用理会。  
-<<<<<<< HEAD
-<<<<<<< HEAD
 Ignore_List：如果你希望某一位或某些用户发送评论时你不会收到通知，就把他（们）的用户名填入这个列表内，如果有多个就用逗号分隔。  
 注意：Admin_User_ID和Channel_ID直接写数字就行，不用像上面的Token那样加引号。Channel_Message直接填true或false，也不要加引号。  
     
