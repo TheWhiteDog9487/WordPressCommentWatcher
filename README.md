@@ -6,13 +6,21 @@ WordPress
 没别的原因，只是因为我自己在用而已。  
 
 # 依赖项
-需要pip里的discord.py包。
+需要pip里的discord.py和requests包。  
+建议使用虚拟环境，隔离掉对全局环境的污染，而且Ubuntu新版本的apt仓库里好像已经没有python3-discord了。  
 ```shell
 # Windows用户看这边~
-pip install discord.py
+python -m venv bot-env
+bot-env/Scripts/activate.ps1
+# ↑ 如果使用命令提示符，就用activate.bat
+pip install -U discord.py requests
+
 # Linux用户看这边~
-# 我自己用的是Ubuntu，所以是apt
-apt install python3-discord
+apt install libffi-dev libnacl-dev python3-dev
+python3 -m venv bot-env
+source bot-env/bin/activate
+# ↑ 如果使用fish，就用activate.fish
+pip install -U discord.py requests
 ```
 
 # 部署
@@ -49,12 +57,14 @@ Linux用户可以考虑用service文件，格式参考[这个](https://github.co
 [Unit]
 Description=WordPress评论监控
 After=multi-user.target
+
 [Service]
 WorkingDirectory=/home/App
 User=root
 Type=idle
-ExecStart=python3 /home/App/WordPress评论监控.py
+ExecStart=/bin/bash -c 'source /home/App/bot-env/bin/activate && python3 /home/App/WordPress评论监控.py'
 Restart=always
+
 [Install]
 WantedBy=multi-user.target
 ```
