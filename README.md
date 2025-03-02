@@ -6,27 +6,27 @@ WordPress
 没别的原因，只是因为我自己在用而已。  
 
 # 依赖项
-需要pip里的discord.py和requests包。  
+需要pip里的discord.py，aiohttp，markdownify和requests包。  
 建议使用虚拟环境，隔离掉对全局环境的污染，而且Ubuntu新版本的apt仓库里好像已经没有python3-discord了。  
 ```shell
 # Windows用户看这边~
 python -m venv bot-env
 bot-env/Scripts/activate.ps1
 # ↑ 如果使用命令提示符，就用activate.bat
-pip install -U discord.py requests
+pip install -U discord.py requests aiohttp markdownify
 
 # Linux用户看这边~
 apt install libffi-dev libnacl-dev python3-dev
 python3 -m venv bot-env
 source bot-env/bin/activate
 # ↑ 如果使用fish，就用activate.fish
-pip install -U discord.py requests
+pip install -U discord.py requests aiohttp markdownify
 ```
 
 # 部署
 从仓库下载"WordPress评论监控.py"，打开。  
 首次运行会直接退出，目录下多出来一个json配置文件，打开。  
-URL：要监测博客的地址，可以是IP或域名，必须加http://或者https://，末尾不要加/  
+URL：要监测博客的地址，可以是IP或域名  
 _DiscordConfig__Bot_Token：机器人的令牌  
 注：不用在意这个属性的名称为什么看起来很奇怪，受保护的类型序列化之后是这样的。  
 Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。  
