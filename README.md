@@ -26,13 +26,16 @@ pip install -U discord.py requests aiohttp markdownify
 # 部署
 从仓库下载"WordPress评论监控.py"，打开。  
 首次运行会直接退出，目录下多出来一个json配置文件，打开。  
-URL：要监测博客的地址，可以是IP或域名  
-_DiscordConfig__Bot_Token：机器人的令牌  
+- URL：要监测博客的地址，可以是IP或域名  
+- _DiscordConfig__Bot_Token：机器人的令牌  
+
 注：不用在意这个属性的名称为什么看起来很奇怪，受保护的类型序列化之后是这样的。  
-Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。  
-Admin_User_ID：选择私信提醒的朋友，这里填上你的Discord用户ID，选择频道提醒的不用理会。  
-Channel_ID：选择频道提醒的朋友，这里填上你想让机器人发送消息的频道ID，选择私信提醒的不用理会。  
-Ignore_List：如果你希望某一位或某些用户发送评论时你不会收到通知，就把他（们）的用户名填入这个列表内，如果有多个就用逗号分隔。  
+
+- Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。  
+- Admin_User_ID：选择私信提醒的朋友，这里填上你的Discord用户ID，选择频道提醒的不用理会。  
+- Channel_ID：选择频道提醒的朋友，这里填上你想让机器人发送消息的频道ID，选择私信提醒的不用理会。  
+- Ignore_List：如果你希望某一位或某些用户发送评论时你不会收到通知，就把他（们）的用户名填入这个列表内，如果有多个就用逗号分隔。  
+
 注意：Admin_User_ID和Channel_ID直接写数字就行，不用像上面的Token那样加引号。Channel_Message直接填true或false，也不要加引号。  
     
 填写完成之后应该大致长这样：
