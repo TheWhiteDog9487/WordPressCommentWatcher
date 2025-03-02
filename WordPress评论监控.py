@@ -1,16 +1,17 @@
-import asyncio
-import discord
-from datetime import datetime
-import logging
-import requests
-import os
-import time
-import platform
-import zipfile
 import json
-import aiohttp
-from discord.ext import tasks
+import logging
+import os
+import platform
+import time
+import zipfile
+from datetime import datetime
+from typing import List, Dict
 
+import aiohttp
+import discord
+import requests
+from discord.ext import tasks
+from markdownify import markdownify
 
 LogFileName = ""
 LogPath = ""
@@ -19,20 +20,20 @@ WorkDirectory = ""
 
 class DiscordConfig(object):
     def __init__(self):
-        self.Ignore_List = []
-        self.__Bot_Token = ""
-        self.URL = ""
-        self.Admin_User_ID = 0
-        self.Channel_ID = 0
-        self.Channel_Message = True
+        self.Ignore_List: List = []
+        self.__Bot_Token: str = ""
+        self.URL: str = ""
+        self.Admin_User_ID: int = 0
+        self.Channel_ID: int = 0
+        self.Channel_Message: bool = True
 
-    def From_Dict(self, Dict: dict):
-        self.Ignore_List = Dict["Ignore_List"]
-        self.__Bot_Token = Dict["_DiscordConfig__Bot_Token"]
-        self.URL = Dict["URL"]
-        self.Admin_User_ID = Dict["Admin_User_ID"]
-        self.Channel_ID = Dict["Channel_ID"]
-        self.Channel_Message = Dict["Channel_Message"]
+    def From_Dict(self, OriginDict: dict):
+        self.Ignore_List = OriginDict["Ignore_List"]
+        self.__Bot_Token = OriginDict["_DiscordConfig__Bot_Token"]
+        self.URL = OriginDict["URL"]
+        self.Admin_User_ID = OriginDict["Admin_User_ID"]
+        self.Channel_ID = OriginDict["Channel_ID"]
+        self.Channel_Message = OriginDict["Channel_Message"]
         return self
 
     def Get_Token(self):
@@ -45,7 +46,6 @@ class DiscordConfig(object):
 class DiscordClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.Message = None
         self.Config = None
         # an attribute we can access from our task
 
@@ -56,37 +56,97 @@ class DiscordClient(discord.Client):
     async def TimerTrigger(self) -> None:
         logging.info(f'现在是{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}，开始检测评论状态。')
         Compress_LogFile()
-        response = None
         async with aiohttp.ClientSession() as session:
-            async with session.get('https://www.thewhitedog9487.xyz/wp-json/wp/v2/comments') as response:
+            async with session.get(f'{self.Config.URL}/wp-json/wp/v2/comments') as response:
                 response = await response.json()
-        for comment in response:
+        with open('最新评论发布时间.txt', 'r+', encoding="utf-8") as f:
+            FileCommentDate = f.readline().replace('\n', '')
+            FileCommentDate = int(time.mktime(time.strptime(FileCommentDate, '%Y年%m月%d日 %H时%M分%S秒')))
+            comment: Dict = response[0]
+            '''
+              {
+                "id": 1,
+                "post": 1,
+                "parent": 0,
+                "author": 0,
+                "author_name": "一位WordPress评论者",
+                "author_url": "https://wordpress.org/",
+                "date": "2020-12-26T21:26:51",
+                "date_gmt": "2020-12-26T13:26:51",
+                "content": {
+                  "rendered": "<p>嗨，这是一条评论。<br />\n要开始审核、编辑及删除评论，请访问仪表盘的“评论”页面。<br />\n评论者头像来自<a href=\"https://gravatar.com\">Gravatar</a>。</p>\n"
+                },
+                "link": "https://www.thewhitedog9487.xyz/2020/12/26/hello-world/#comment-1",
+                "status": "approved",
+                "type": "comment",
+                "author_avatar_urls": {
+                  "24": "https://secure.gravatar.com/avatar/d7a973c7dab26985da5f961be7b74480?s=24&d=identicon&r=g",
+                  "48": "https://secure.gravatar.com/avatar/d7a973c7dab26985da5f961be7b74480?s=48&d=identicon&r=g",
+                  "96": "https://secure.gravatar.com/avatar/d7a973c7dab26985da5f961be7b74480?s=96&d=identicon&r=g"
+                },
+                "meta": [],
+                "_links": {
+                  "self": [
+                    {
+                      "href": "https://www.thewhitedog9487.xyz/wp-json/wp/v2/comments/1",
+                      "targetHints": {
+                        "allow": [
+                          "GET"
+                        ]
+                      }
+                    }
+                  ],
+                  "collection": [
+                    {
+                      "href": "https://www.thewhitedog9487.xyz/wp-json/wp/v2/comments"
+                    }
+                  ],
+                  "up": [
+                    {
+                      "embeddable": true,
+                      "post_type": "post",
+                      "href": "https://www.thewhitedog9487.xyz/wp-json/wp/v2/posts/1"
+                    }
+                  ]
+                }
+              }
+            '''
             RemoteCommentDate = int(time.mktime(time.strptime(comment["date"], '%Y-%m-%dT%H:%M:%S')))
-            with open('最新评论发布时间.txt', 'r', encoding="utf-8") as r:
-                FileCommentDate = r.readline().replace('\n', '')
-                FileCommentDate = int(time.mktime(time.strptime(FileCommentDate, '%Y年%m月%d日 %H时%M分%S秒')))
-                if int(FileCommentDate) < RemoteCommentDate:
-                    logging.info('有新评论')
-                    with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
-                        w.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
-                        self.Message = f'评论者：{comment["author_name"]}\n评论内容：{comment["content"]["rendered"]}评论链接：{comment["link"]}\n评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}'
-                        for user in self.Config.Ignore_List:
-                            if comment["author_name"] == user:
-                                logging.info("由于发送评论的用户位于忽略列表当中，因此本次新评论不会发送提醒。")
-                                logging.info(self.Message)
-                                return
-                        if self.Config.Channel_Message:
-                            channel = self.get_channel(self.Config.Channel_ID)
-                            await channel.send(f"<@{self.Config.Admin_User_ID}>\n{self.Message}")
-                        else:
-                            user = await self.fetch_user(self.Config.Admin_User_ID)
-                            await user.send(self.Message)
-                        logging.info('已发送新通知\n')
-                elif int(FileCommentDate) > RemoteCommentDate:
-                    logging.info('有评论被删除\n')
-                elif int(FileCommentDate) == RemoteCommentDate:
-                    logging.info('没有新评论\n')
-            break
+            if int(FileCommentDate) < RemoteCommentDate:
+                logging.info('有新评论')
+                f.seek(0)
+                f.truncate()
+                f.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
+                Message = f'''
+                                    评论者：{comment["author_name"]}
+                                    评论内容：{comment["content"]["rendered"]}
+                                    评论链接：{comment["link"]}
+                                    评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}
+                                    '''
+                MarkdownMessage = markdownify(Message)
+                logging.info(Message)
+                for comment_sender in self.Config.Ignore_List:
+                    comment_sender: str
+                    # ↑ https://stackoverflow.com/questions/41641449/how-do-i-annotate-types-in-a-for-loop
+                    if comment["author_name"] == comment_sender:
+                        logging.info("由于发送评论的用户位于忽略列表当中，因此本次新评论不会发送提醒。")
+                        logging.info('\n' + MarkdownMessage)
+                        return
+                if self.Config.Channel_Message:
+                    channel = self.get_channel(self.Config.Channel_ID)
+                    # await channel.send(f"<@{self.Config.Admin_User_ID}>\n{self.Message}")
+                    await channel.send(MarkdownMessage)
+                else:
+                    discord_user = await self.fetch_user(self.Config.Admin_User_ID)
+                    await discord_user.send(MarkdownMessage)
+                logging.info('已发送新通知\n')
+            elif int(FileCommentDate) > RemoteCommentDate:
+                f.seek(0)
+                f.truncate()
+                f.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
+                logging.info('有评论被删除\n')
+            elif int(FileCommentDate) == RemoteCommentDate:
+                logging.info('没有新评论\n')
 
     async def setup_hook(self) -> None:
         self.TimerTrigger.start()
@@ -118,7 +178,7 @@ def Initialization():
     if platform.system() == 'Windows':
         LogPath = os.curdir + "\\日志\\"
     elif platform.system() == 'Linux':
-        LogPath = "/var/log/thewhitedog9487/"
+        LogPath = "/var/log/thewhitedog9487/WordPress评论监控/"
     else:
         print("不认识的操作系统，请联系开发者寻求适配。")
         exit()
@@ -128,7 +188,8 @@ def Initialization():
     Compress_LogFile()
     logging.basicConfig(filename=LogFileName, level=logging.INFO, encoding="utf-8")
     logging.info(f'程序从{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}开始运行')
-    if (not os.path.exists("配置文件.json")) or (os.path.exists("配置文件.json") and (os.path.getsize("配置文件.json") == 0)):
+    if (not os.path.exists("配置文件.json")) or (
+            os.path.exists("配置文件.json") and (os.path.getsize("配置文件.json") == 0)):
         with open("配置文件.json", "w", encoding="utf-8") as w:
             json.dump(DiscordConfig().__dict__, w, indent=4)
             logging.info('首次运行')
@@ -158,8 +219,15 @@ def Initialization():
             exit()
     if not os.path.exists('最新评论发布时间.txt') or os.path.getsize('最新评论发布时间.txt') == 0:
         if not str(Config.URL).startswith(("http://", "https://")):
-            logging.error("监测链接必须以http://或者https://打头！")
-            exit()
+            try:
+                res = requests.get('https://' + Config.URL)
+                if res.status_code != 200:
+                    raise Exception
+                Config.URL = 'https://' + Config.URL
+            except:
+                Config.URL = 'http://' + Config.URL
+        if Config.URL.endswith('/'):
+            Config.URL = Config.URL[:-1]
         with open('最新评论发布时间.txt', 'w', encoding="utf-8") as w:
             w.write(datetime.strptime(
                 requests.get(Config.URL + '/wp-json/wp/v2/comments').json()[0]["date"],
@@ -172,4 +240,8 @@ if __name__ == '__main__':
     intent.messages = True
     BotClient = DiscordClient(intents=intent)
     BotClient.Config = Initialization()
+    # BotClient.Config.Ignore_List = []
+    # ↑ 调试用
+    # 为什么没有给变量用的装饰器啊
+    # 我需要Mixin的@Redirect指令
     BotClient.run(BotClient.Config.Get_Token())
