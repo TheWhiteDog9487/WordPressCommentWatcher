@@ -3,28 +3,41 @@
 
 # 适用平台
 WordPress  
-没别的原因，只是因为我自己在用而已。  
-
-# 依赖项
-需要pip里的discord.py，aiohttp，markdownify和requests包。  
-建议使用虚拟环境，隔离掉对全局环境的污染，而且Ubuntu新版本的apt仓库里好像已经没有python3-discord了。  
-```shell
-# Windows用户看这边~
-python -m venv bot-env
-bot-env/Scripts/activate.ps1
-# ↑ 如果使用命令提示符，就用activate.bat
-pip install -U discord.py requests aiohttp markdownify
-
-# Linux用户看这边~
-apt install libffi-dev libnacl-dev python3-dev
-python3 -m venv bot-env
-source bot-env/bin/activate
-# ↑ 如果使用fish，就用activate.fish
-pip install -U discord.py requests aiohttp markdownify
-```
+没别的原因，只是因为我自己在用而已。
 
 # 部署
-从仓库下载"WordPress评论监控.py"，打开。  
+克隆本仓库  
+```shell
+git clone https://github.com/TheWhiteDog9487/WordPressCommentWatcher.git
+```
+本项目使用uv管理Python环境，请确保你的设备上已经安装，具体请参考[uv的官方文档](https://docs.astral.sh/uv/getting-started/installation/)  
+然后，在仓库文件夹下打开终端，安装项目依赖项  
+```shell
+uv sync
+```
+如果不愿意安装uv，也没关系的喏  
+你可以直接使用pip，但我仍然建议你创建一个虚拟环境，而不是在全局安装包  
+隔离掉环境污染，好管理一些，也会好看点，对吧？  
+```shell
+python3 -m venv .venv
+# 先用下面那个代码块的指令激活虚拟环境，再运行下面这个哦( •̀ ω •́ )✧
+pip install -r requirements.txt
+```
+
+激活虚拟环境  
+```shell
+# Windows用户看这边~
+.venv/Scripts/activate.ps1
+# ↑ 如果使用命令提示符，就用activate.bat
+
+# Linux用户看这边~
+source .venv/bin/activate
+# ↑ 如果使用fish，就用activate.fish
+```
+然后运行项目  
+```shell
+python3 WordPress评论监控.py
+```
 首次运行会直接退出，目录下多出来一个json配置文件，打开。  
 - URL：要监测博客的地址，可以是IP或域名  
 - _DiscordConfig__Bot_Token：机器人的令牌  
@@ -65,7 +78,7 @@ After=multi-user.target
 WorkingDirectory=/home/App
 User=root
 Type=idle
-ExecStart=/bin/bash -c 'source /home/App/bot-env/bin/activate && python3 /home/App/WordPress评论监控.py'
+ExecStart=/bin/bash -c 'source /home/App/.venv/bin/activate && python3 /home/App/WordPress评论监控.py'
 Restart=always
 
 [Install]
