@@ -11,22 +11,21 @@ WordPress
 git clone https://github.com/TheWhiteDog9487/WordPressCommentWatcher.git
 ```
 本项目使用uv管理Python环境，请确保你的设备上已经安装，具体请参考[uv的官方文档](https://docs.astral.sh/uv/getting-started/installation/)  
-然后，在仓库文件夹下打开终端.
+然后，在仓库文件夹下打开终端，安装项目依赖项  
 ```shell
-# 安装项目依赖项
 uv sync
-
-# 运行项目
-uv run WordPress评论监控.py
 ```
 如果不愿意安装uv，也没关系的喏  
 你可以直接使用pip，但我仍然建议你创建一个虚拟环境，而不是在全局安装包  
 隔离掉环境污染，好管理一些，也会好看点，对吧？  
 ```shell
-# 创建虚拟环境
 python3 -m venv .venv
+# 先用下面那个代码块的指令激活虚拟环境，再运行下面这个哦( •̀ ω •́ )✧
+pip install -r requirements.txt
+```
 
-# 激活虚拟环境  
+激活虚拟环境  
+```shell
 # Windows用户看这边~
 .venv/Scripts/activate.ps1
 # ↑ 如果使用命令提示符，就用activate.bat
@@ -34,11 +33,9 @@ python3 -m venv .venv
 # Linux用户看这边~
 source .venv/bin/activate
 # ↑ 如果使用fish，就用activate.fish
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 然后运行项目
+```
+然后运行项目  
+```shell
 python3 WordPress评论监控.py
 ```
 首次运行会直接退出，目录下多出来一个json配置文件，打开。  
@@ -75,11 +72,7 @@ Linux系统上实现了Systemd服务的自动安装与卸载：
 - 安装  
     给脚本添加install参数，将systemd服务自动安装到系统内。  
     ```shell
-    uv run WordPress评论监控.py install
-    # 默认生成的配置是给使用uv的大家准备的喏
-    # 如果你使用虚拟环境+pip，那一定要记得在install后面加上pip选项喏（￣︶￣）↗　
-    # 记得首先激活你的虚拟环境，然后像这样喏
-    python3 WordPress评论监控.py install pip
+    python3 WordPress评论监控.py install
     ```
     这会同时设置服务为开机自启并启动服务。  
     安装完成之后可以使用下面的命令查看服务状态：  
