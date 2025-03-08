@@ -158,9 +158,6 @@ class DiscordClient(discord.Client):
 
 
 def Compress_LogFile():
-    global LogFileName
-    global LogPath
-    global WorkDirectory
     if os.path.exists(LogFileName):
         if os.path.getsize(LogFileName) > 1024 * 1024 * 1:  # 1MB
             os.chdir(LogPath)
@@ -172,22 +169,6 @@ def Compress_LogFile():
 
 
 def Initialization():
-    global LogFileName
-    global LogPath
-    global WorkDirectory
-    WorkDirectory = os.getcwd()
-    if platform.system() == 'Windows':
-        LogPath = os.curdir + "\\日志\\"
-    elif platform.system() == 'Linux':
-        LogPath = "/var/log/thewhitedog9487/WordPress评论监控/"
-    else:
-        print("不认识的操作系统，请联系开发者寻求适配。")
-        exit()
-    LogFileName = LogPath + "WordPress评论监控.log"
-    if not os.path.exists(LogPath):
-        os.makedirs(LogPath)
-    Compress_LogFile()
-    logging.basicConfig(filename=LogFileName, level=logging.INFO, encoding="utf-8")
     logging.info(f'程序从{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}开始运行')
     if (not os.path.exists("配置文件.json")) or (
             os.path.exists("配置文件.json") and (os.path.getsize("配置文件.json") == 0)):
@@ -236,6 +217,26 @@ def Initialization():
     return Config
 
 
+def LoggingInit():
+    global LogFileName
+    global LogPath
+    global WorkDirectory
+    WorkDirectory = os.getcwd()
+    if platform.system() == 'Windows':
+        LogPath = os.curdir + "\\日志\\"
+    elif platform.system() == 'Linux':
+        LogPath = "/var/log/thewhitedog9487/WordPress评论监控/"
+    else:
+        print("不认识的操作系统，请联系开发者寻求适配。")
+        exit()
+    LogFileName = LogPath + "WordPress评论监控.log"
+    if not os.path.exists(LogPath):
+        os.makedirs(LogPath)
+    Compress_LogFile()
+    logging.basicConfig(filename=LogFileName, level=logging.INFO, encoding="utf-8")
+    logging.info(f'程序从{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}开始运行')
+
+
 def ParseArgument():
     Argument: str
     try:
@@ -268,6 +269,7 @@ WantedBy=multi-user.target'''
                 with open(SystemdServiceFilePath, "w", encoding="utf-8") as w:
                     w.write(SystemdServiceFileContent)
                 logging.info("服务文件已生成")
+                logging.info(f"服务文件路径：{SystemdServiceFilePath}")
                 os.system("systemctl daemon-reload")
                 logging.info("Systemd守护进程已重新加载")
                 os.system("systemctl enable WordPressCommentWatcher")
@@ -304,8 +306,9 @@ WantedBy=multi-user.target'''
             exit()
     elif Argument in ["-h", "--help", "help"]:
         HelpContent = f'''help 显示此帮助
-    --help
-    -h
+    别名：
+        --help
+        -h
 install 自动安装服务
     仅支持使用systemd的Linux系统
     配置文件会被写入到 {SystemdServiceFilePath} 
@@ -318,7 +321,9 @@ uninstall 自动卸载服务
 
 
 if __name__ == '__main__':
+    LoggingInit()
     ParseArgument()
+    Compress_LogFile()
     intent = discord.Intents.default()
     intent.messages = True
     BotClient = DiscordClient(intents=intent)
