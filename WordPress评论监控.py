@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import platform
+import sys
 import time
 import zipfile
 from datetime import datetime
@@ -117,12 +118,12 @@ class DiscordClient(discord.Client):
                 f.seek(0)
                 f.truncate()
                 f.write(time.strftime('%Y年%m月%d日 %H时%M分%S秒', time.localtime(RemoteCommentDate)))
-                Message = f'''
-                                    评论者：{comment["author_name"]}
-                                    评论内容：{comment["content"]["rendered"]}
-                                    评论链接：{comment["link"]}
-                                    评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}
-                                    '''
+
+                Message = f'''评论者：{comment["author_name"]}
+评论内容：{comment["content"]["rendered"]}
+评论链接：{comment["link"]}
+评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}'''
+
                 MarkdownMessage = markdownify(Message)
                 logging.info(Message)
                 for comment_sender in self.Config.Ignore_List:
@@ -235,7 +236,89 @@ def Initialization():
     return Config
 
 
+def ParseArgument():
+    Argument: str
+    try:
+        Argument = sys.argv[1]
+    except IndexError:
+        return
+    WorkDirectory = os.getcwd()
+    SystemdServiceFilePath = "/usr/lib/systemd/system/WordPressCommentWatcher.service"
+    SystemdServiceFileContent = fr'''[Unit]
+Description=WordPress评论监控
+After=multi-user.target
+
+[Service]
+WorkingDirectory={WorkDirectory}
+User=root
+Type=idle
+ExecStart=/bin/bash -c 'source {WorkDirectory}/.venv/bin/activate && python3 {sys.argv[0]}'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target'''
+
+    if Argument == "install":
+        if platform.system() == 'Linux':
+            if os.path.exists(SystemdServiceFilePath):
+                logging.error('已存在服务文件')
+                print("已存在服务文件，无需再次安装。")
+                exit()
+            else:
+                with open(SystemdServiceFilePath, "w", encoding="utf-8") as w:
+                    w.write(SystemdServiceFileContent)
+                logging.info("服务文件已生成")
+                os.system("systemctl daemon-reload")
+                logging.info("Systemd守护进程已重新加载")
+                os.system("systemctl enable WordPressCommentWatcher")
+                logging.info("服务已设置开机自启")
+                os.system("systemctl start WordPressCommentWatcher")
+                logging.info("服务已启动")
+                print("成功安装服务！")
+                exit()
+        elif platform.system() == 'Windows':
+            logging.error("Windows系统当前不支持自动安装")
+            print("Windows系统当前不支持自动安装")
+            exit()
+    elif Argument == "uninstall":
+        if platform.system() == 'Linux':
+            if os.path.exists(SystemdServiceFilePath):
+                logging.info("已找到服务文件")
+                os.system("systemctl stop WordPressCommentWatcher")
+                logging.info("服务已停止")
+                os.system("systemctl disable WordPressCommentWatcher")
+                logging.info("服务已取消开机自启")
+                os.remove(SystemdServiceFilePath)
+                logging.info("服务文件已删除")
+                os.system("systemctl daemon-reload")
+                logging.info("Systemd守护进程已重新加载")
+                print("成功卸载服务！")
+                exit()
+            else:
+                logging.error("服务文件不存在")
+                print("服务文件不存在，无需卸载。")
+                exit()
+        elif platform.system() == 'Windows':
+            logging.error("Windows系统当前不支持自动卸载")
+            print("Windows系统当前不支持自动卸载")
+            exit()
+    elif Argument in ["-h", "--help", "help"]:
+        HelpContent = f'''help 显示此帮助
+    --help
+    -h
+install 自动安装服务
+    仅支持使用systemd的Linux系统
+    配置文件会被写入到 {SystemdServiceFilePath} 
+    自动启动并设置开机自启
+uninstall 自动卸载服务
+    仅支持使用systemd的Linux系统
+    会移除位于 {SystemdServiceFilePath} 的服务文件'''
+        print(HelpContent)
+        exit()
+
+
 if __name__ == '__main__':
+    ParseArgument()
     intent = discord.Intents.default()
     intent.messages = True
     BotClient = DiscordClient(intents=intent)

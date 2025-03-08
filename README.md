@@ -68,31 +68,20 @@ python3 WordPress评论监控.py
 但是，如果每次重启设备后都是人工去开启程序，非常麻烦且不必要，非常的不人性化。  
 所以，我的建议是，把这个东西注册成一个服务。  
 Windows用户考虑下计划任务（我没实际用过，仅提供可能的建议）  
-Linux用户可以考虑用service文件，格式参考[这个](https://github.com/TheWhiteDog9487/WordPressCommentWatcher/blob/main/WordPressCommentWatcher.service)  
-```ini
-[Unit]
-Description=WordPress评论监控
-After=multi-user.target
-
-[Service]
-WorkingDirectory=/home/App
-User=root
-Type=idle
-ExecStart=/bin/bash -c 'source /home/App/.venv/bin/activate && python3 /home/App/WordPress评论监控.py'
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-注意一下里面的WorkingDirectory=和ExecStart=，后面的路径换成你自己程序的位置。  
-把这个文件保存下来，假设你的文件路径在/home/App/WordPressCommentWatcher.service  
-打开你的终端。  
-```shell
-ln -s /home/App/WordPressCommentWatcher.service /usr/lib/systemd/system/
-# 链接还是复制，随意。
-systemctl daemon-reload
-systemctl enable WordPressCommentWatcher
-systemctl start WordPressCommentWatcher 
-# 然后你就可以用 systemctl status WordPressCommentWatcher 来查看服务状态。
-```
-不出意外的话，应该是没问题了。
+Linux系统上实现了Systemd服务的自动安装与卸载：
+- 安装  
+    给脚本添加install参数，将systemd服务自动安装到系统内。  
+    ```shell
+    python3 WordPress评论监控.py install
+    ```
+    这会同时设置服务为开机自启并启动服务。  
+    安装完成之后可以使用下面的命令查看服务状态：  
+    ```shell
+    systemctl status WordPressCommentWatcher
+    ```
+- 卸载
+    使用uninstall参数。  
+    ```shell
+    python3 WordPress评论监控.py uninstall
+    ```
+    
