@@ -10,6 +10,7 @@ from typing import List, Dict
 
 import aiohttp
 import discord
+from markdown2 import markdown
 import requests
 from discord.ext import tasks
 from markdownify import markdownify
@@ -27,6 +28,8 @@ class DiscordConfig(object):
         self.Admin_User_ID: int = 0
         self.Channel_ID: int = 0
         self.Channel_Message: bool = True
+        self.__WordPress_Application_Password: str = ""
+        self.WordPress_User_Name: str = ""
 
     def From_Dict(self, OriginDict: dict):
         self.Ignore_List = OriginDict["Ignore_List"]
@@ -35,6 +38,8 @@ class DiscordConfig(object):
         self.Admin_User_ID = OriginDict["Admin_User_ID"]
         self.Channel_ID = OriginDict["Channel_ID"]
         self.Channel_Message = OriginDict["Channel_Message"]
+        self.__WordPress_Application_Password = OriginDict["_DiscordConfig__WordPress_Application_Password"]
+        self.WordPress_User_Name = OriginDict["WordPress_User_Name"]
         return self
 
     def Get_Token(self):
@@ -43,11 +48,14 @@ class DiscordConfig(object):
     def Set_Token(self, Token: str):
         self.__Bot_Token = Token
 
+    def Get_WordPress_Application_Password(self):
+        return self.__WordPress_Application_Password
+
 
 class DiscordClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.Config = None
+        self.Config: DiscordConfig = None
         # an attribute we can access from our task
 
     async def on_ready(self):
@@ -58,6 +66,8 @@ class DiscordClient(discord.Client):
         logging.info(f'现在是{datetime.now().replace().strftime("%Y-%m-%d %H:%M:%S")}，开始检测评论状态。')
         Compress_LogFile()
         async with aiohttp.ClientSession() as session:
+            # https://www.thewhitedog9487.xyz//wp-json/wp/v2/comments
+            # ↑ 测试用，快速跳转
             async with session.get(f'{self.Config.URL}/wp-json/wp/v2/comments') as response:
                 response = await response.json()
         with open('最新评论发布时间.txt', 'r+', encoding="utf-8") as f:
@@ -122,6 +132,9 @@ class DiscordClient(discord.Client):
                 Message = f'''评论者：{comment["author_name"]}
 评论内容：{comment["content"]["rendered"]}
 评论链接：{comment["link"]}
+文章ID：{comment["post"]}
+父评论ID：{comment["parent"]}
+评论ID：{comment["id"]}
 评论时间：{time.strftime("%Y年%m月%d日 %H时%M分%S秒", time.localtime(RemoteCommentDate))}'''
 
                 MarkdownMessage = markdownify(Message)
@@ -148,6 +161,43 @@ class DiscordClient(discord.Client):
                 logging.info('有评论被删除\n')
             elif int(FileCommentDate) == RemoteCommentDate:
                 logging.info('没有新评论\n')
+
+    async def on_message(self, message: discord.Message):
+        if message.author == self.user:
+            return
+        if message.reference is None:
+            return
+        replied_message = await message.channel.fetch_message(message.reference.message_id)
+        if replied_message.author != self.user:
+            return
+        if message.author.id != self.Config.Admin_User_ID:
+            # 只对管理员用户的回复进行处理
+            logging.warning("非管理员用户尝试回复评论，已忽略。")
+            return
+        post_id: str = ""
+        parent_comment_id: int = 0
+        for Line in replied_message.content.splitlines():
+            if Line.startswith("文章ID："):
+                post_id = Line.replace("文章ID：", "").strip()
+            elif Line.startswith("评论ID："):
+                parent_comment_id = int(Line.replace("评论ID：", "").strip())
+                break
+        tail = f"\n\n此评论由Discord用户 {message.author.display_name}(ID: {message.author.id}) 使用[监控机器人](https://github.com/TheWhiteDog9487/WordPressCommentWatcher)在Discord服务器内回复。"
+        formatted_message = markdown(message.content + tail)
+        BasicAuth = aiohttp.BasicAuth(self.Config.WordPress_User_Name,
+                                      self.Config.Get_WordPress_Application_Password())
+        PostData = {
+            "content": formatted_message,
+            "post": post_id,
+            "parent": parent_comment_id}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f'{self.Config.URL}/wp-json/wp/v2/comments', json=PostData,
+                                    auth=BasicAuth) as response:
+                if response.status == 201:
+                    logging.info(f"已成功回复评论，内容为：{formatted_message}")
+                else:
+                    logging.error(f"回复评论失败，状态码：{response.status}，内容：{await response.text()}")
+                    await message.channel.send(f"回复评论失败，状态码：{response.status}，请检查日志。")
 
     async def setup_hook(self) -> None:
         self.TimerTrigger.start()
@@ -214,6 +264,10 @@ def Initialization():
             w.write(datetime.strptime(
                 requests.get(Config.URL + '/wp-json/wp/v2/comments').json()[0]["date"],
                 '%Y-%m-%dT%H:%M:%S').strftime('%Y年%m月%d日 %H时%M分%S秒'))
+    if len(Config.Ignore_List) == 0:
+        if Config.WordPress_User_Name != "":
+            logging.info('未设置忽略列表，默认将WordPress用户添加到忽略列表')
+            Config.Ignore_List.append(Config.WordPress_User_Name)
     return Config
 
 
@@ -326,6 +380,7 @@ if __name__ == '__main__':
     Compress_LogFile()
     intent = discord.Intents.default()
     intent.messages = True
+    intent.message_content = True
     BotClient = DiscordClient(intents=intent)
     BotClient.Config = Initialization()
     # BotClient.Config.Ignore_List = []
