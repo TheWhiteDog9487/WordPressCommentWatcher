@@ -47,7 +47,7 @@ python3 WordPress评论监控.py
   - **请务必开启机器人privileged intents中的Message Content项，哪怕你不需要在Discord内回复评论**
 - _DiscordConfig__WordPress_Application_Password：WordPress站点上创建的应用密码，如果需要在Discord内回复评论的话需要填写，不需要的话不管就是了
 
-注：不用在意这个属性的名称为什么看起来很奇怪，受保护的类型序列化之后是这样的。  
+注：不用在意这两个属性的名称为什么看起来很奇怪，受保护的类型序列化之后是这样的。  
 
 - Channel_Message：如果你希望机器人在一个服务器的频道内提醒你，这里就填true；如果你希望机器人私信你，那就填false。
 - Admin_User_ID：选择私信提醒的朋友，这里填上你的Discord用户ID，选择频道提醒的不用理会。
@@ -68,12 +68,11 @@ python3 WordPress评论监控.py
 	"Channel_ID":1141585619819188244,
 	"Channel_Message":true,
 	"Ignore_List": ["TheWhiteDog9487"],
-    "_DiscordConfig__WordPress_Application_Password": "a3DB 7J4q 8d3b 9f2c 6e5a 1c2b",
-    "WordPress_User_Name": "TheWhiteDog9487"
+	"_DiscordConfig__WordPress_Application_Password": "a3DB 7J4q 8d3b 9f2c 6e5a 1c2b",
+	"WordPress_User_Name": "TheWhiteDog9487"
 }
 ```
 ( 献祭一下以前的令牌，来这当下例子  
-**警告：本项目不保证配置文件向后兼容**
 
 这个时候就已经可以跑起来了。  
 但是，如果每次重启设备后都是人工去开启程序，非常麻烦且不必要，非常的不人性化。  
@@ -100,3 +99,26 @@ Linux系统上实现了Systemd服务的自动安装与卸载：
     python3 WordPress评论监控.py uninstall
     ```
     
+# 更新
+**警告：本项目不保证配置文件向后兼容！**  
+**你可能需要在更新之后删除旧的配置文件并重新填写！**  
+
+```shell
+systemctl stop WordPressCommentWatcher
+```
+先把目前的服务关了，如果你安装了systemd服务的话
+
+```shell
+git pull
+```
+更新代码
+
+```shell
+uv sync
+```
+更新依赖项
+
+```shell
+systemctl start WordPressCommentWatcher
+```
+重新启动服务
